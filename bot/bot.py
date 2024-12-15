@@ -6,7 +6,7 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from dotenv import load_dotenv
 
-from keyboards import create_form_keyboard
+from bot.keyboards import create_form_keyboard
 
 load_dotenv()
 API_TOKEN = os.getenv("API_TOKEN")
