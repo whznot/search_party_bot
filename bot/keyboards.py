@@ -1,14 +1,17 @@
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-create_form_keyboard = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [InlineKeyboardButton(text="Создать анкету", callback_data="create_form")]
-    ]
+create_form_keyboard = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="Создать анкету")]
+    ],
+    resize_keyboard=True,
+    one_time_keyboard=True
 )
 
-gender_keyboard = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [InlineKeyboardButton(text="Мужской", callback_data="gender_male")],
-        [InlineKeyboardButton(text="Женский", callback_data="gender_female")]
-    ]
+gender_keyboard = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="Мужской"), KeyboardButton(text="Женский")]
+    ],
+    resize_keyboard=True,
+    one_time_keyboard=True
 )
