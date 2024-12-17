@@ -12,7 +12,7 @@ def update_user_profile(user_id: int, updates: dict, media_file: str = None, med
             if profile.media:
                 profile.media += f", {new_media}"
             else:
-                profile_media = new_media
+                profile.media = new_media
 
         session.commit()
 
