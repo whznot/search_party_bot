@@ -4,12 +4,12 @@ import os
 from aiogram import Bot, Dispatcher, Router, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import Message, InputMediaPhoto, InputMediaVideo
 from dotenv import load_dotenv
 
 from db import init_db
 from helpers import update_user_profile
-from keyboards import create_form_keyboard, gender_keyboard
+from keyboards import create_form_keyboard, gender_keyboard, confirm_keyboard
 from states import ProfileForm
 
 load_dotenv()
@@ -96,6 +96,38 @@ async def handle_media(message: Message, state: FSMContext):
         return
 
     uploaded_count = update_user_profile(user_id, updates={}, media_file=file_id, media_type=file_type)
+    if uploaded_count > 3:
+        await message.answer("Ты уже загрузил максимум 3 медиафайла. Анкета готова.")
+        return
+
+    from db import SessionLocal, Profile
+    with SessionLocal() as session:
+        profile = session.query(Profile).filter_by(user_id=user_id).first()
+
+        profile_text = f"{profile.name}, {profile.age}, {profile.city}\nБюджет: {profile.budget}"
+
+        media_group = []
+        if profile.media:
+            media_files = profile.media.split(",")
+            for idx, media in enumerate(media_files):
+                media_type, file_id = media.split(":")
+                if media_type == "photo":
+                    media_group.append(
+                        InputMediaPhoto(media=file_id, caption=profile_text if idx == 0 else "")
+                    )
+                elif media_type == "video":
+                    media_group.append(
+                        InputMediaVideo(media=file_id, caption=profile_text if idx == 0 else "")
+                    )
+
+        if media_group:
+            await message.answer_media_group(media=media_group)
+        else:
+            await message.answer("Медиа не найдены, заполни анкету заново")
+
+        await message.answer("Вот твоя анкета, все верно?", reply_markup=confirm_keyboard)
+
+        await state.clear()
 
 
 dp.include_router(router)

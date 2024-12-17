@@ -15,3 +15,11 @@ gender_keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True,
     one_time_keyboard=True
 )
+
+confirm_keyboard = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="✅ Подтвердить"), KeyboardButton(text="🔄 Заполнить анкету заново")]
+    ],
+    resize_keyboard=True,
+    one_time_keyboard=True
+)
