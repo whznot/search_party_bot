@@ -72,7 +72,7 @@ async def handle_budget(message: Message, state: FSMContext):
         await message.answer("Введи сумму числом")
         return
 
-    update_user_profile(message.from_user.id, {"budget": int(message.text)})
+    await state.update_data(budget=int(message.text))
     await state.set_state(ProfileForm.media)
     await message.answer("загрузи до трех фоток или видео для анкеты :)")
 
@@ -92,11 +92,12 @@ async def handle_media(message: Message, state: FSMContext):
         await message.answer("Загрузи фото или видео")
         return
 
-    media_files = media_files[:3]
+    media_files = media_files[-3:]
     await state.update_data(media=media_files)
 
-    user_data = await state.get_data()
-    profile_text = f"{user_data.get('name')}, {user_data.get('age')}, {user_data.get('city')}\nБюджет: {user_data.get('budget')}"
+    if not message.media_group_id:
+        user_data = await state.get_data()
+        profile_text = f"{user_data.get('name')}, {user_data.get('age')}, {user_data.get('city')}\nБюджет: {user_data.get('budget')}"
 
     media_group = []
     for idx, media in enumerate(media_files):
