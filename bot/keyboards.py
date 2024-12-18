@@ -23,3 +23,11 @@ confirm_keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True,
     one_time_keyboard=True
 )
+
+save_media = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="Это все, сохранить как есть")]
+    ],
+    resize_keyboard=True,
+    one_time_keyboard=True
+)

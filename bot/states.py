@@ -8,4 +8,5 @@ class ProfileForm(StatesGroup):
     age = State()
     budget = State()
     media = State()
+    send_profile = State()
     confirmation = State()

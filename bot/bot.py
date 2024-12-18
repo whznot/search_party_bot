@@ -4,12 +4,12 @@ import os
 from aiogram import Bot, Dispatcher, Router, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, InputMediaPhoto, InputMediaVideo
+from aiogram.types import Message
+from aiogram.utils.media_group import MediaGroupBuilder
 from dotenv import load_dotenv
 
 from db import init_db
-from helpers import update_user_profile
-from keyboards import create_form_keyboard, gender_keyboard, confirm_keyboard
+from keyboards import create_form_keyboard, gender_keyboard, confirm_keyboard, save_media
 from states import ProfileForm
 
 load_dotenv()
@@ -24,7 +24,7 @@ init_db()
 
 @router.message(Command("start"))
 async def start_handler(message: Message, state: FSMContext):
-    await state.clear()
+    await state.update_data(media=[])
     await message.answer("Здесь ты можешь найти себе компанию на новый год!", reply_markup=create_form_keyboard)
 
 
@@ -77,39 +77,42 @@ async def handle_budget(message: Message, state: FSMContext):
     await message.answer("загрузи до трех фоток или видео для анкеты :)")
 
 
+async def show_profile(message:Message, state:FSMContext):
+    await message.answer("Вот так выглядит твоя анкета:")
+    data = await state.get_data()
+    md = MediaGroupBuilder()
+    for i in data['media']:
+        md.add_photo(i)
+    await bot.send_media_group(chat_id=message.chat.id, media=md.build())
+    await message.answer("Нрав?", reply_markup=confirm_keyboard)
+
+
+
+
 @router.message(ProfileForm.media)
 async def handle_media(message: Message, state: FSMContext):
     data = await state.get_data()
-    media_files = data.get("media", [])
 
-    if message.photo:
-        file_id = message.photo[-1].file_id
-        media_files.append(f"photo:{file_id}")
-    elif message.video:
-        file_id = message.video.file_id
-        media_files.append(f"video:{file_id}")
-    else:
-        await message.answer("Загрузи фото или видео")
-        return
+    if len(data["media"]) == 3:
+        await show_profile(message, state)
+    elif (message.photo or message.video) and len(data["media"]) < 3:
+        if message.photo:
+            data["media"].append(message.photo[-1].file_id)
+            await state.update_data(media=data["media"])
+            await message.answer("+ контентик, это всё?", reply_markup=save_media)
+        else:
+            data["media"].append(message.video.file_id)
+            await state.update_data(media=data["media"])
 
-    media_files = media_files[-3:]
-    await state.update_data(media=media_files)
+    elif not message.photo or not message.video:
+        await message.answer("Отправь фотки или видео")
 
-    if not message.media_group_id:
-        user_data = await state.get_data()
-        profile_text = f"{user_data.get('name')}, {user_data.get('age')}, {user_data.get('city')}\nБюджет: {user_data.get('budget')}"
 
-    media_group = []
-    for idx, media in enumerate(media_files):
-        media_type, file_id = media.split(":")
-        if media_type == "photo":
-            media_group.append(InputMediaPhoto(media=file_id, caption=profile_text if idx == 0 else ""))
-        elif media_type == "video":
-            media_group.append(InputMediaVideo(media=file_id, caption=profile_text if idx == 0 else ""))
+# @router.message(ProfileForm.media & F.text == "Это все, сохранить как есть")
 
-    await message.answer_media_group(media=media_group)
-    await message.answer("Вот твоя анкета, все верно?", reply_markup=confirm_keyboard)
-    await state.set_state(ProfileForm.confirmation)
+
+# @router.message(ProfileForm.send_profile)
+# async def send_profile(message: Message, state: FSMContext):
 
 
 @router.message(ProfileForm.confirmation, F.text == "✅ Подтвердить")
